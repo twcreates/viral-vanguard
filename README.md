@@ -2,8 +2,10 @@
 
 ## ▶ [Play in your browser](https://twcreates.github.io/viral-vanguard/)
 
-Works on desktop and on phones (landscape). The game is the v77 build exactly as published in the Viral Vanguard
-artifact: one self-contained file, [`index.html`](index.html), served unchanged by GitHub Pages.
+Works on desktop and on phones (landscape). The game is the v77 build from the Viral Vanguard artifact, one
+self-contained file, [`index.html`](index.html), with fixes on top (see the commit history): walkable highway and
+bridge decks under the sky bridges, pillars you can walk between, no stray walls in the lobbies, billboard
+projectors mounted on the facades, and lobby prints that no longer flicker.
 
 ## Reading the game file
 
