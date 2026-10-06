@@ -1,0 +1,76 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Viral Vanguard</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;900&family=Chakra+Petch:wght@400;600&display=swap" rel="stylesheet">
+<style><<styles/style_1.css>></style>
+
+<!-- boot loading screen: key art, spinning crest that turns while the load bar fills; fades out once the main menu is ready -->
+<style><<styles/style_2.css>></style>
+<div id="boot" aria-label="Loading Viral Vanguard" role="progressbar"><div class="art"></div><div class="ld"><img class="spin" alt="" src="data:image/png;base64,<<assets/file_03.png>>"><div class="col"><div class="bar"><i></i></div><span class="lbl" id="bootl">Loading Neon Core</span></div></div></div>
+<script><<scripts/script_1_part_01.js>></script>
+
+<div id="hud" hidden><div id="cross"></div><canvas id="mm" width="320" height="320" role="button" aria-label="Minimap, tap to expand"></canvas>
+  <div id="top"><div>WAVE <b id="w">1</b> &nbsp; SCORE <b id="sc">0</b></div><div id="hpb"><div id="hpf"></div></div><div id="hpt">100 / 100</div></div>
+  <div id="kf" aria-live="polite"></div>
+  <div id="hint">WASD move &middot; Mouse aim &middot; LMB fire &middot; RMB aim &middot; Shift sprint &middot; Space jump &middot; C crouch (hold: prone) &middot; R reload &middot; X swap &middot; E lethal &middot; G stun &middot; Q skill &middot; 4/5/6 streaks &middot; M map &middot; P pause</div>
+</div>
+<div id="dmg"></div><div id="shd"></div><div id="chr"></div><div id="heal"></div>
+<div id="tc">
+ <div id="zl"></div><div id="zr"></div>
+ <div id="stick"><i id="knob"></i><b id="lockA">SPRINT &uarr;</b></div>
+ <button class="tb" id="bf2" aria-label="Fire (left hand)"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"/><path d="M12 2v5M12 17v5M2 12h5M17 12h5"/></svg><span class="lb">FIRE</span></button>
+ <button class="tb" id="bf" aria-label="Fire, drag to aim"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"/><path d="M12 2v5M12 17v5M2 12h5M17 12h5"/></svg><span class="lb">FIRE</span></button>
+ <button class="tb" id="bads" aria-label="Aim down sights"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="2.6"/></svg><span class="lb">ADS</span></button>
+ <button class="tb" id="br" aria-label="Reload"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20 4v5h-5"/></svg><span class="lb">RELOAD</span></button>
+ <button class="tb" id="bj" aria-label="Jump"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 13l6-6 6 6M6 19l6-6 6 6"/></svg><span class="lb">JUMP</span></button>
+ <button class="tb" id="bc" aria-label="Crouch, hold for prone"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 7l6 6 6-6M5 19h14"/></svg><span class="lb">CROUCH</span></button>
+ <button class="tb" id="bk" aria-label="Skill"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L5 14h6l-1 8 8-12h-6z"/></svg><span class="lb">SKILL</span><span class="kl">Q</span></button>
+ <button class="tb" id="bt" aria-label="Tactical: stun charge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8"/></svg><span class="lb">STUN</span><span class="cnt" id="tn">2</span><span class="kl">G</span></button>
+ <button class="tb" id="bb" aria-label="Lethal: blast"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="14" r="6"/><path d="M10 8V5h4v3M14 5l3-2"/></svg><span class="lb">BLAST</span><span class="kl">E</span></button>
+ <button class="tb st" id="bs1" style="--sc:#21e6ff" aria-label="Sentry drone streak, 5 kills"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 2v5M12 17v5M3 9l4 1.5M21 9l-4 1.5"/></svg><span class="lb">0/5</span><span class="kl">4</span></button>
+ <button class="tb st" id="bs2" style="--sc:#ff2a3d" aria-label="Orbital strike streak, 10 kills"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v14M6 10l6 6 6-6M4 21h16"/></svg><span class="lb">0/10</span><span class="kl">5</span></button>
+ <button class="tb st" id="bs3" style="--sc:#3dff9a" aria-label="Overdrive streak, 15 kills"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/><circle cx="12" cy="12" r="9"/></svg><span class="lb">0/15</span><span class="kl">6</span></button>
+ <button class="tb" id="bq" aria-label="Quick turn 180"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 21V10.5a5 5 0 0 1 10 0V17"/><path d="M13.5 13.8L17 17.4l3.5-3.6"/><path d="M3.5 6.5l3.5-3 3.5 3" opacity=".45"/></svg><span class="lb">180</span><span class="kl">V</span></button>
+ <button class="tb" id="bp" aria-label="Pause">II</button>
+ <button class="tb" id="wsw" aria-label="Swap weapon"><span class="wc"><small id="wn">PULSE RIFLE</small><b id="am">30/30</b></span><span class="w2">SWAP<i id="w2">HORNET</i></span><span class="kl">X</span></button>
+</div>
+
+<div id="pz" class="scrn" hidden><h1 class="big">PAUSED</h1><div class="row"><button id="rs" class="cta">RESUME</button><button id="pq" class="ghost">HANGAR</button></div></div>
+<div id="end" class="scrn" hidden><h1 class="big">OVERRUN</h1><div class="stat" id="es"></div><p>The swarm took the arena. Change your loadout or drop straight back in.</p>
+  <div class="row"><button id="again" class="cta">REDEPLOY</button><button id="eh" class="ghost">HANGAR</button></div></div>
+
+<div id="ov">
+  <div id="av" aria-label="Your operative"></div>
+  <div id="avh" class="dragHint" hidden><svg viewBox="0 0 48 24" aria-hidden="true"><path d="M6 12h36M6 12l5-4M6 12l5 4M42 12l-5-4M42 12l-5 4"/><circle cx="24" cy="12" r="3.5"/></svg><span>DRAG TO ROTATE</span></div>
+  <div class="who">
+    <div class="brand"><h1>VIRAL VANGUARD</h1></div>
+    <div class="tag">OPERATIVE &middot; <span id="avc">MEDIUM FRAME</span></div>
+    <div id="avn">VANGUARD</div>
+    <div id="avk"></div>
+  </div>
+  <section id="pop" class="glass" role="dialog" aria-labelledby="pt" hidden>
+    <div class="ph"><h2 id="pt">WEAPON</h2><small id="ps"></small><button class="x" id="px" aria-label="Close"><svg viewBox="0 0 14 14"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div>
+    <div id="list"></div>
+    <div id="det"></div>
+    <button id="done" class="ghost">DONE</button>
+  </section>
+  <nav class="bar" aria-label="Loadout">
+    <button class="slot glass" data-pop="weapon" aria-expanded="false" aria-controls="pop"></button>
+    <button class="slot glass" data-pop="armor" aria-expanded="false" aria-controls="pop"></button>
+    <button class="slot glass" data-pop="skill" aria-expanded="false" aria-controls="pop"></button>
+    <button class="gear glass" data-pop="set" aria-expanded="false" aria-controls="pop" aria-label="Settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M2.5 12h3M18.5 12h3M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1"/></svg></button>
+    <button id="coopb" class="coopb glass" aria-pressed="false" title="Two players on a split screen: CO-OP vs the swarm, or 1V1 DUEL (marksman rail lances, first to 5). Player 2 uses a controller or I J K L + arrows, ; fire">2P <b>OFF</b></button>
+    <button id="go" class="cta">DEPLOY</button>
+  </nav>
+</div>
+
+<div id="rot" class="scrn" hidden>
+  <svg viewBox="0 0 100 100" aria-hidden="true"><rect x="32" y="12" width="36" height="76" rx="7" fill="none" stroke="#21e6ff" stroke-width="4"/><rect x="38" y="20" width="24" height="56" rx="2" fill="#ff2bd6" opacity=".35"/><circle cx="50" cy="82" r="2.5" fill="#21e6ff"/></svg>
+  <h2>ROTATE YOUR DEVICE</h2>
+  <p>Turn your phone sideways. Landscape gives both thumbs room on the controls and shows more of the arena.</p>
+  <button id="rotok" class="ghost">PLAY IN PORTRAIT</button>
+</div>
+
+<script><<scripts/script_2_part_01.js>><<scripts/script_2_part_02.js>><<scripts/script_2_part_03.js>><<scripts/script_2_part_04.js>></script>
+<script><<scripts/script_3_part_01.js>><<scripts/script_3_part_02.js>></script>
+
