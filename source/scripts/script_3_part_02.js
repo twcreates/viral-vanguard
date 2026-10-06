@@ -1,3 +1,23 @@
+  if(Wp.pierce){const hs=rc.intersectObjects(targets(),false),seen=new Set();let blocks=0,end=null;
+   for(const h of hs){if(h.object.userData.en){const e=h.object.userData.e;if(!seen.has(e)){seen.add(e);const dm=hitDmg(e,h);BLOOD.hit(h.point,rc.ray.direction,dm/30);hurt(e,dm)}}else if(h.object.userData.p2){if(!seen.has('p2')){seen.add('p2');CO.hitP2(h)}}else if(h.object.userData.glass){CITY.shatter(h.object,h.point)}else{destroy(h.point,Wp.brk);FX.impact(h.point,hNrm(h),Wp.col,1);if(++blocks>=3){end=h.point;break}}}
+   tracer(end||farPt());continue}
+  const h=rc.intersectObjects(targets(),false)[0];
+  if(Wp.well){const pt=h?h.point:farPt();tracer(pt);if(h&&h.object.userData.en){const dm=hitDmg(h.object.userData.e,h);BLOOD.hit(h.point,rc.ray.direction,dm/30);hurt(h.object.userData.e,dm)}else if(h&&h.object.userData.glass)CITY.shatter(h.object,pt);else if(h)destroy(pt,Wp.brk);addWell(pt);continue}
+  if(!h){tracer(Wp.range?rc.ray.origin.clone().addScaledVector(rc.ray.direction,Wp.range):farPt());continue}
+  tracer(h.point);
+  if(Wp.boom)explode(h.point,Wp.dmg,Wp.boom);
+  else if(h.object.userData.en){const e=h.object.userData.e,dm=hitDmg(e,h);if(Wp.chill)e.chill=Wp.chill;BLOOD.hit(h.point,rc.ray.direction,dm/30);hurt(e,dm);if(Wp.chain)chainZap(e,dm)}
+  else if(h.object.userData.p2)CO.hitP2(h);
+  else if(h.object.userData.glass)CITY.shatter(h.object,h.point);
+  else{destroy(h.point,Wp.brk);FX.impact(h.point,hNrm(h),Wp.col,Wp.pel>1?.55:1)}}
+ rc.far=100}
+function blast(){if(!go||bcd>0)return;dsrc='BLAST';rc.far=100;bcd=5*(1-(Ar.cdr||0));shake=.5;aimAt(0,0);const h=rc.intersectObjects(targets(),false)[0],pt=h?h.point:farPt();AUD.boom(pt,1.25);tracer(pt,null,0xff2bd6);destroy(pt,5.5);burst(pt,30,0xff2bd6,14);[...EN].forEach(e=>{if(e.m.position.distanceTo(pt)<8)hurt(e,70)})}
+function reload(){if(rel<=0&&ammo<Wp.mag)rel=Wp.rl}
+let dj=0,airT=0,padT=0;
+function jump(){if(!go||stance)return;if(slideT>0&&ground){slideBurst();return}if(ground){V.y=11*(Ar.jmp||1);ground=0;dj=0;footstep(surfAt(),0,'jump',.8)}else if(!dj&&!(grap&&grap.pull)){dj=1;V.y=10*(Ar.jmp||1);burst(new T.Vector3(P.x,P.y+.1,P.z),10,0x21e6ff,5);beep(520,.14,'sine',.08)}}
+function jumpBtn(){if(!go)return;if(stance>0){stance=0;return}if(grap&&grap.pull){const kx=V.x,kz=V.z,hang=grap.hang>0;endGrapple(11);if(hang){V.x=Math.sin(yaw)*7;V.z=Math.cos(yaw)*7}else{V.x=kx*.6;V.z=kz*.6}return}jump()}
+function crouchDown(){if(!go)return;sprintLock=false;if(sprinting&&ground){slide();cdT=0;return}cdT=performance.now()}
+function crouchUp(){if(cdT&&performance.now()-cdT<300)stance=stance===1?0:1;cdT=0}
 const FB={hold:0,t:0,mode:'hip'};let adsOn=false,adsHeld=0,rmb=false;
 function fireDown(){if(!go)return;FB.hold=1;FB.t=0;FB.mode=FMODE[Wp.id]||'hip';sprintLock=false;if(FB.mode==='onetap')fire()}
 function fireUp(){if(FB.hold&&FB.mode==='release')fire();FB.hold=0}

@@ -1058,15 +1058,16 @@ const CITY=(()=>{
 
  // ---------- collision: static footprints on a 1 m grid over the playfield, plus ray proxies ----------
  // grid covers the whole Neon Core City plateau; two elevated slab layers per cell (decks, bridges, sky-bridges)
- const GX0=-172,GZ0=-142,NX=344,NZ=284,SG=new Float32Array(NX*NZ),SB=new Float32Array(NX*NZ),ST=new Float32Array(NX*NZ),SB2=new Float32Array(NX*NZ),ST2=new Float32Array(NX*NZ),boxes=[],proxies=[],proxyMat=new T.MeshBasicMaterial({visible:false});
+ const GX0=-172,GZ0=-142,NX=344,NZ=284,SG=new Float32Array(NX*NZ),SB=new Float32Array(NX*NZ),ST=new Float32Array(NX*NZ),SB2=new Float32Array(NX*NZ),ST2=new Float32Array(NX*NZ),SB3=new Float32Array(NX*NZ),ST3=new Float32Array(NX*NZ),SB4=new Float32Array(NX*NZ),ST4=new Float32Array(NX*NZ),boxes=[],proxies=[],proxyMat=new T.MeshBasicMaterial({visible:false});
  const ci=(x,z)=>{const gx=Math.floor(x)-GX0,gz=Math.floor(z)-GZ0;return gx<0||gz<0||gx>=NX||gz>=NZ?-1:gx*NZ+gz};
- function solidBox(x0,x1,z0,z1,h,mm){for(let x=Math.floor(x0);x<Math.ceil(x1);x++)for(let z=Math.floor(z0);z<Math.ceil(z1);z++){const i=ci(x,z);if(i>=0)SG[i]=Math.max(SG[i],h)}
+ function solidBox(x0,x1,z0,z1,h,mm){const small=x1-x0<3.2&&z1-z0<3.2,cx=Math.floor((x0+x1)/2),cz=Math.floor((z0+z1)/2);for(let x=Math.floor(x0);x<Math.ceil(x1);x++)for(let z=Math.floor(z0);z<Math.ceil(z1);z++){if(small&&!(x===cx&&z===cz)&&(Math.min(x+1,x1)-Math.max(x,x0))*(Math.min(z+1,z1)-Math.max(z,z0))<.3)continue;/* small props (posts, trees, pylons, lamps, barriers) only block the cells they really cover */const i=ci(x,z);if(i>=0)SG[i]=Math.max(SG[i],h)}
   if(mm!==false)boxes.push([x0,x1,z0,z1,h]);const p=new T.Mesh(G.box,proxyMat);p.position.set((x0+x1)/2,h/2,(z0+z1)/2);p.scale.set(x1-x0,h,z1-z0);p.updateMatrixWorld();proxies.push(p)}
  const slab=(x,z,b,t)=>{const i=ci(x,z);if(i<0)return;
   if(ST[i]<=0){SB[i]=b;ST[i]=t}else if(b<=ST[i]+.6&&t>=SB[i]-.6){SB[i]=Math.min(SB[i],b);ST[i]=Math.max(ST[i],t)}
   else if(ST2[i]<=0){SB2[i]=b;ST2[i]=t}else{SB2[i]=Math.min(SB2[i],b);ST2[i]=Math.max(ST2[i],t)}};
  const RMQ=[],roofMass=(x0,x1,z0,z1,top)=>RMQ.push(()=>{for(let x=Math.floor(x0);x<Math.ceil(x1);x++)for(let z=Math.floor(z0);z<Math.ceil(z1);z++){const i=ci(x,z);if(i>=0&&SG[i]>top-6)SG[i]=Math.max(SG[i],top)}(window.NCC_ROOFOBJ=window.NCC_ROOFOBJ||[]).push([(x0+x1)/2,(z0+z1)/2,x1-x0,z1-z0,top])});
- const sol=(x,y,z)=>{const i=ci(x,z);if(i<0)return false;return y<SG[i]||(y>=SB[i]&&y<ST[i])||(y>=SB2[i]&&y<ST2[i])};
+ const slab3=(x,z,b,t)=>{const i=ci(x,z);if(i<0)return;if(ST3[i]<=0){SB3[i]=b;ST3[i]=t}else if(b<=ST3[i]+.6&&t>=SB3[i]-.6){SB3[i]=Math.min(SB3[i],b);ST3[i]=Math.max(ST3[i],t)}else if(ST4[i]<=0){SB4[i]=b;ST4[i]=t}else{SB4[i]=Math.min(SB4[i],b);ST4[i]=Math.max(ST4[i],t)}};
+ const sol=(x,y,z)=>{const i=ci(x,z);if(i<0)return false;return y<SG[i]||(y>=SB[i]&&y<ST[i])||(y>=SB2[i]&&y<ST2[i])||(y>=SB3[i]&&y<ST3[i])||(y>=SB4[i]&&y<ST4[i])};
  const stairH=(x,z)=>-1;
  const hAt=(x,z)=>{const i=ci(x,z);return i<0?0:SG[i]};
 
@@ -1105,6 +1106,11 @@ const CITY=(()=>{
  // ================= NEON CORE CITY: layout from the blockout (cleaned for play) + Godot-built kit instances =================
  // Coordinates match the Godot project: metres, +Y up, north = -Z, ground y = 0. The Central Spire stands at the origin.
  const LAY=NCC_LAYOUT,BND=LAY.bounds,HWY=19;
+ // towers must not stand on the elevated highways: trim the side of any footprint that overhangs a deck
+ for(const tw of LAY.towers.concat(LAY.buildings))for(const h of LAY.highways){const inDeck=(x,z)=>{const px=x-h.c[0],pz=z-h.c[1];return Math.abs(px*h.d[0]+pz*h.d[1])<=h.L/2+.5&&Math.abs(-px*h.d[1]+pz*h.d[0])<=6};
+  const hits=()=>{const[x0,x1,z0,z1]=tw.box;for(let x=x0;x<=x1;x+=.25)for(let z=z0;z<=z1;z+=.25)if(inDeck(x,z))return true;return false};
+  if(tw.h<=HWY-1.3||!hits())continue;const[x0,x1,z0,z1]=tw.box,cx=(x0+x1)/2,cz=(z0+z1)/2,px=cx-h.c[0],pz=cz-h.c[1],side=-px*h.d[1]+pz*h.d[0],nx=-h.d[1]*Math.sign(side),nz=h.d[0]*Math.sign(side);
+  const k=Math.abs(nx)>=Math.abs(nz)?(nx>0?0:1):(nz>0?2:3);for(let i=0;i<120&&hits();i++){if(k===0)tw.box[0]+=.25;else if(k===1)tw.box[1]-=.25;else if(k===2)tw.box[2]+=.25;else tw.box[3]-=.25}}
  const RYd=d=>Math.atan2(d[0],d[1]);
  // Godot kit instancing: every placement is collected here and turned into one InstancedMesh per kit piece and material bucket
  const KI={};const kitAt=(name,x,y,z,ry=0,sx=1,sy=1,sz=1)=>{(KI[name]||(KI[name]=[])).push(M4(x,y,z,ry,0,0,sx,sy,sz))};
@@ -1114,6 +1120,7 @@ const CITY=(()=>{
  const pboxR=(cx,cy,cz,w,h,d,ry)=>{const p=new T.Mesh(G.box,proxyMat);p.position.set(cx,cy,cz);p.rotation.y=ry||0;p.scale.set(w,h,d);p.updateMatrixWorld();proxies.push(p)};
  const addProxy=(g,y=0)=>{const m=new T.Mesh(g,new T.MeshBasicMaterial({visible:false,side:T.DoubleSide}));m.position.y=y;m.updateMatrixWorld();proxies.push(m)};
  const deck=(cx,cz,L,W,dx,dz,b,t)=>{obbCells(cx,cz,L,W,dx,dz,(x,z)=>slab(x,z,b,t));pboxR(cx,(b+t)/2,cz,W,t-b,L,Math.atan2(dx,dz))};
+ const deck3=(cx,cz,L,W,dx,dz,b,t)=>{obbCells(cx,cz,L,W,dx,dz,(x,z)=>slab3(x,z,b,t));pboxR(cx,(b+t)/2,cz,W,t-b,L,Math.atan2(dx,dz))};
  const groundOBB=(cx,cz,L,W,dx,dz,h)=>{obbCells(cx,cz,L,W,dx,dz,(x,z)=>{const i=ci(x,z);if(i>=0)SG[i]=Math.max(SG[i],h)});pboxR(cx,h/2,cz,W,h,L,Math.atan2(dx,dz))};
  const inRoad=(x,z,pad=0)=>LAY.roads.some(r=>{const px=x-r.c[0],pz=z-r.c[1];return Math.abs(px*r.d[0]+pz*r.d[1])<=r.L/2+pad&&Math.abs(-px*r.d[1]+pz*r.d[0])<=r.W/2+pad});
  const PLZ=36*MAPK;
@@ -1234,8 +1241,8 @@ const inPlaza=(x,z,pad=0)=>Math.abs(x)<PLZ+pad&&Math.abs(z)<PLZ+pad;
    if(!colClear(lx,lz,top)||inPlaza(lx,lz))continue;lift(lx,lz,top);const w=o-1.6-edge,lo=edge+w/2;if(w>.2)landing(c[0]+dx*t+sx*s*lo,c[1]+dz*t+sz*s*lo,w,3,deckTop,ry);return[s,t]}
   return null};
  for(const h of LAY.highways){const[dx,dz]=h.d,sx=-dz,sz=dx;runSeg(h.c,h.d,h.L,20,HWY,'highway_seg');
-  deck(h.c[0],h.c[1],h.L,11,dx,dz,HWY-1.2,HWY);
-  for(const s of[-1,1])obbCells(h.c[0]+sx*s*5.25,h.c[1]+sz*s*5.25,h.L,.6,dx,dz,(x,z)=>slab(x,z,HWY-1.2,HWY+1.1));
+  deck3(h.c[0],h.c[1],h.L,11,dx,dz,HWY-1.2,HWY);
+  for(const s of[-1,1])obbCells(h.c[0]+sx*s*5.25,h.c[1]+sz*s*5.25,h.L,.6,dx,dz,(x,z)=>slab3(x,z,HWY-1.2,HWY+1.1));
   const ons=h.supports.map(q=>{const t=(q[0]-h.c[0])*dx+(q[1]-h.c[1])*dz;return[h.c[0]+dx*t,h.c[1]+dz*t,t]});
   for(const[x,z]of ons){kitAt('highway_pylon',x,0,z,RYd(h.d)+Math.PI/2,1,(HWY-2.4)/16.6,1);solidBox(x-1.3,x+1.3,z-1.3,z+1.3,HWY-2.4);pool(x,z,4,HEX.cya,.35)}
   ons.sort((a,b)=>a[2]-b[2]);
@@ -1244,8 +1251,8 @@ const inPlaza=(x,z,pad=0)=>Math.abs(x)<PLZ+pad&&Math.abs(z)<PLZ+pad;
 
  // ---------- pedestrian bridges (10 m) and enclosed sky-bridges, with lifts at the ends ----------
  for(const b of LAY.bridges){const[dx,dz]=b.d,sx=-dz,sz=dx,top=b.top;runSeg(b.c,b.d,b.L,10,top,'ped_bridge');
-  deck(b.c[0],b.c[1],b.L,7,dx,dz,top-.5,top);
-  for(const s of[-1,1])obbCells(b.c[0]+sx*s*3.3,b.c[1]+sz*s*3.3,b.L-1,.4,dx,dz,(x,z)=>slab(x,z,top-.5,top+.9));
+  deck3(b.c[0],b.c[1],b.L,7,dx,dz,top-.5,top);
+  for(const s of[-1,1])obbCells(b.c[0]+sx*s*3.3,b.c[1]+sz*s*3.3,b.L-1,.4,dx,dz,(x,z)=>slab3(x,z,top-.5,top+.9));
   for(const e of[-1,1])liftBeside(b.c,b.d,e*(b.L/2-3),3.5,top+.6,top);}
   const GLASS=[],GLASS_G=new T.BoxGeometry(1,1,1),GLASS_M=new T.MeshPhysicalMaterial({color:0x8fd8ff,metalness:.1,roughness:.04,transparent:true,opacity:.26,clearcoat:1,side:T.DoubleSide,depthWrite:false});
   for(const s of LAY.skybridges){const[dx,dz]=s.d,sx=-dz,sz=dx,top=s.top;{const n=Math.ceil(s.L/10),ry=RYd(s.d);for(let k=0;k<n;k++){const t=-s.L/2+(k+.5)*s.L/n,x=s.c[0]+dx*t,z=s.c[1]+dz*t;if(hAt(x,z)>=top+4.8&&hAt(x+dx*4,z+dz*4)>=top+4.8&&hAt(x-dx*4,z-dz*4)>=top+4.8)continue;kitAt('skybridge',x,top,z,ry,1,1,(s.L/n)/10)}}
@@ -1329,9 +1336,9 @@ const inPlaza=(x,z,pad=0)=>Math.abs(x)<PLZ+pad&&Math.abs(z)<PLZ+pad;
 
  // ---------- billboard projector beams (additive frustums from a head in front of each billboard) ----------
  {const P=[],Cc=[];for(const[bx,by,bz,w,h,ry]of holo){if(by<6||by>80)continue;const nx=Math.sin(ry),nz=Math.cos(ry),tx=Math.cos(ry),tz=-Math.sin(ry);
-   const ax=bx+nx*7,az=bz+nz*7,ay=Math.max(1.2,by-h/2-2.5);box('metal',ax,ay-.25,az,.7,.5,.7,0x24222e,ry);addGeo('glow',G.sph,M4(ax,ay+.05,az,0,0,0,.22,.12,.22),HEX.cya);
+   const ax=bx+nx*7,az=bz+nz*7,ay=Math.max(1.2,by-h/2-2.5);/* projector on a steel boom cantilevered from the facade: aimed housing, cyan lens and band, twin rails, tie-rod, wall plate */const dyb=by-ay,Lb=Math.hypot(7,dyb),rxb=Math.atan2(-7,dyb),dX=-nx*7/Lb,dY=dyb/Lb,dZ=-nz*7/Lb,lx=ax+dX*.56,ly=ay+dY*.56,lz=az+dZ*.56;for(const s of[-1,1]){box('metal',bx+nx*3.55+tx*s*.17,ay-.04,bz+nz*3.55+tz*s*.17,.13,.13,7.1,0x2c3040,ry);addGeo('glow',G.box,M4(bx+nx*3.55+tx*s*.17,ay-.115,bz+nz*3.55+tz*s*.17,ry,0,0,.04,.02,6.9),HEX.cya)}box('metal',bx+nx*3.5,ay+.95,bz+nz*3.5,.09,.09,Math.hypot(7,1.9),0x2c3040,ry,Math.atan2(1.9,7));box('metal',bx+nx*.08,ay+.6,bz+nz*.08,.8,2.1,.18,0x2c3040,ry);cyl('metal',ax,ay,az,.27,1.1,0x15171e,ry,rxb);addGeo('glow',G.cyl,M4(ax+dX*.12,ay+dY*.12,az+dZ*.12,ry,rxb,0,.285,.05,.285),HEX.cya);addGeo('glow',G.cyl,M4(lx,ly,lz,ry,rxb,0,.21,.02,.21),HEX.cya);
    const c=[[-1,-1],[1,-1],[1,1],[-1,1]].map(([u,v])=>[bx+tx*u*w/2+nx*.1,by+v*h/2,bz+tz*u*w/2+nz*.1]),col=[HEX.cya,HEX.mag,HEX.vio][P.length%3];
-   for(let i=0;i<4;i++){const a=c[i],b=c[(i+1)%4];P.push(ax,ay,az,...a,...b);Cc.push(col.r*.5,col.g*.5,col.b*.5,col.r*.05,col.g*.05,col.b*.05,col.r*.05,col.g*.05,col.b*.05)}}
+   for(let i=0;i<4;i++){const a=c[i],b=c[(i+1)%4];P.push(lx,ly,lz,...a,...b);Cc.push(col.r*.5,col.g*.5,col.b*.5,col.r*.05,col.g*.05,col.b*.05,col.r*.05,col.g*.05,col.b*.05)}}
   const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(P,3));g.setAttribute('color',new T.Float32BufferAttribute(Cc,3));
   const bm=new T.Mesh(g,new T.MeshBasicMaterial({vertexColors:true,transparent:true,blending:T.AdditiveBlending,depthWrite:false,side:T.DoubleSide,fog:false}));bm.renderOrder=4;S0.add(bm)}
  // coloured smog: district-tinted haze layers overhead
@@ -1605,7 +1612,7 @@ void main(){vec2 q=vU*2.-1.;float d=length(q)+ .35*(fb(q*2.2+vS)-.5);float m=smo
     for(let k=0;k<=n;k++){const z=-L2+k*len/n;B('blk',.1,H,.07,xw,H/2,z);if(k<n)B('blk',.05,H-.3,.03,xw,.15+(H-.3)/2,z+len/n/2)}
     for(let r=1;r<rows;r++)B('blk',.08,.045,len,xw,.15+(H-.3)*r/rows,0);LP.push(['win',sg])}
    else{lbAdd('conc',tileBox(.12,H,len,1.6),base.clone().multiply(new T.Matrix4().makeTranslation(sg*(Wh-.06),H/2,0)));
-    let a_=0;for(let z=-L2+2.6;z<L2-2;z+=4.6,a_++){if(OCC.some(r=>z+.8>r[2]&&z-.8<r[3]&&r[1]-r[0]>W*.9))continue;const xa=sg*(Wh-.13);
+    let a_=0;for(let z=-L2+2.6;z<L2-2;z+=4.6,a_++){if(OCC.some(r=>z+.8>r[2]&&z-.8<r[3]&&r[1]-r[0]>W*.9))continue;const xa=sg*(Wh-.145);
      R_('art'+(a_%3),new T.PlaneGeometry(1.2,1.5),xa,1.8,z,0,-sg*Math.PI/2);B('blk',.03,1.58,1.28,sg*(Wh-.115),1.8,z);B('brass',.08,.05,.7,sg*(Wh-.2),2.7,z);LP.push(['pt',sg*(Wh-.6),z,1.6,[255,214,160],.35]);
      if(fits(sg>0?Wh-.62:-Wh+.1,sg>0?Wh-.1:-Wh+.62,z-1.15,z+1.15)){B('walnut',.48,.62,2.2,sg*(Wh-.36),.39,z);for(const q of[-1,1])B('blk',.42,.08,.05,sg*(Wh-.36),.04,z+q*1);R_('pot',new T.SphereGeometry(.13,14,10),sg*(Wh-.36),.83,z-.6,0,0,0,1,1.3,1);
       take(sg>0?Wh-.62:-Wh+.1,sg>0?Wh-.1:-Wh+.62,z-1.15,z+1.15);FM(sg*(Wh-.36),z,.48,2.2,.7)}}}}
@@ -1723,7 +1730,7 @@ void main(){vec2 q=vU*2.-1.;float d=length(q)+ .35*(fb(q*2.2+vS)-.5);float m=smo
    stripC=new T.MeshBasicMaterial({color:0x21e6ff}),stripM=new T.MeshBasicMaterial({color:0xff2bd6}),doorM=new T.MeshBasicMaterial({map:doorTex,toneMapped:false}),frameM=new T.MeshBasicMaterial({color:0x21e6ff});
   for(const sbr of LAY.skybridges){const[dx,dz]=sbr.d,sx=-dz,sz=dx,top=sbr.top,ry=RYd(sbr.d),at=(t,o=0)=>[sbr.c[0]+dx*t+sx*o,sbr.c[1]+dz*t+sz*o],hi=t=>{const i=ci(...at(t));return i<0?0:SG[i]};
    const L2=sbr.L/2,EXT=36,blk=t=>{const[x,z]=at(t),i=ci(x,z);if(i<0)return false;if(SG[i]>=top+4.8)return true;if(Math.abs(t)<=L2+.25)return false;return SG[i]>top+.6||sol(x,top+1,z)||sol(x,top+3,z)};
-   let inB=false,t0=0,c0=false;const sp=[];for(let t=-L2-EXT;t<=L2+EXT+.01;t+=.5){const b=blk(t);if(b&&!inB){inB=true;t0=t;c0=t<=-L2-EXT+.01}else if(!b&&inB){inB=false;sp.push([t0,t-.5,c0,false])}}if(inB)sp.push([t0,L2+EXT,c0,true]);for(let k=sp.length-1;k>0;k--)if(sp[k][0]-sp[k-1][1]<=4.6&&(Math.abs(sp[k][0])>L2||Math.abs(sp[k-1][1])>L2)){sp[k-1][1]=sp[k][1];sp[k-1][3]=sp[k][3];sp.splice(k,1)}
+   let inB=false,t0=0,c0=false;const sp=[];for(let t=-L2-EXT;t<=L2+EXT+.01;t+=.5){const b=blk(t);if(b&&!inB){inB=true;t0=t;c0=t<=-L2-EXT+.01}else if(!b&&inB){inB=false;sp.push([t0,t-.5,c0,false])}}if(inB)sp.push([t0,L2+EXT,c0,true]);for(let k=sp.length-1;k>0;k--)if(sp[k][0]-sp[k-1][1]<=1.5||sp[k][0]-sp[k-1][1]<=4.6&&(Math.abs(sp[k][0])>L2||Math.abs(sp[k-1][1])>L2)){sp[k-1][1]=sp[k][1];sp[k-1][3]=sp[k][3];sp.splice(k,1)}
    for(const[p_,q_,u_,v_]of sp)if(q_>=-L2-3.5&&p_<=L2+3.5)TUN.push([sbr,p_,q_,u_,v_])}
   // carve a cell into a walkway section: floor at the deck, clear headroom hh, keep any structure above (and below, for gate towers over a street)
   const CARVE=(i,top,hh)=>{const H=SG[i];let hiT=0,loB=1e9;for(const[b_,t_]of[[SB[i],ST[i]],[SB2[i],ST2[i]]]){if(t_<=0)continue;if(t_>top+hh)hiT=Math.max(hiT,t_);if(b_<top&&t_>top-.6)loB=Math.min(loB,b_)}
@@ -1733,7 +1740,7 @@ void main(){vec2 q=vU*2.-1.;float d=length(q)+ .35*(fb(q*2.2+vS)-.5);float m=smo
    // collision: floor at the deck, ceiling 4.8 m up, building above; the walls stay solid
    for(let t=a;t<=b;t+=.3)for(let o=-3.1;o<=3.1;o+=.3){const i=ci(...at(t,o));if(i<0)continue;const H=SG[i];if(H>=top+4.8){SG[i]=top;SB[i]=top+4.8;ST[i]=H;SB2[i]=0;ST2[i]=0;continue}if(Math.abs(t)>sbr.L/2+.2)CARVE(i,top,4.8)}
    // how much room the building leaves around the corridor: a lobby where it is wide and tall enough, a plain corridor otherwise
-   const WS={'-1':9,'1':9},FW={'-1':1,'1':1},FX={'-1':0,'1':0};let Hb=1e9;for(let t=a+1.6;t<=b-1.6;t+=1)for(const sg of[-1,1]){let o=3.4,br=false;for(;o<=10;o+=.5){const i=ci(...at(t,sg*o));if(i<0||SG[i]<top+4.8&&!(ST[i]>top+4.8)){br=i>=0;break}Hb=Math.min(Hb,Math.max(SG[i],ST[i]))}
+   const WS={'-1':9,'1':9},FW={'-1':1,'1':1},FX={'-1':0,'1':0};let Hb=1e9;const seam=(t)=>[-1,1].every(sg=>{const i=ci(...at(t,sg*3.4));return i>=0&&SG[i]<top+4.8&&!(ST[i]>top+4.8)});for(let t=a+1.6;t<=b-1.6;t+=1)for(const sg of[-1,1]){if(seam(t)||seam(t-.5)||seam(t+.5))continue;let o=3.4,br=false;for(;o<=10;o+=.5){const i=ci(...at(t,sg*o));if(i<0||SG[i]<top+4.8&&!(ST[i]>top+4.8)){br=i>=0;break}Hb=Math.min(Hb,Math.max(SG[i],ST[i]))}
     if(!br)FW[sg]=0;else FX[sg]=Math.max(FX[sg],o);WS[sg]=Math.min(WS[sg],br?o-.75:o-1.4)}
    const Wl=Math.max(3.3,WS[-1]),Wr=Math.max(3.3,WS[1]),Wh=(Wl+Wr)/2;
    const H=Math.max(4.8,Math.min(8.5,Hb-top-1.2)),lobby=Wl+Wr>=9&&len>=6;
@@ -1751,7 +1758,7 @@ void main(){vec2 q=vU*2.-1.;float d=length(q)+ .35*(fb(q*2.2+vS)-.5);float m=smo
    // doorways on the facades where the corridor enters from open air
    {const XL=lobby?Wl:3.3,XR=lobby?Wr:3.3,HH=lobby?H:4.8;CLIPV.push([sbr.c[0]+dx*tm,sbr.c[1]+dz*tm,dx,dz,len/2,lobby&&FW[-1]?-(FX[-1]+.6):-XL+.07,lobby&&FW[1]?FX[1]+.6:XR-.07,top+.04,top+HH-.06]);
     for(const[e,tt,cap]of[[-1,a,cA],[1,b,cB]]){if(cap){ENDCAP(at,ry,tt-e*.4,top,XL,XR,HH);continue}DOORWALL(at,ry,tt-e*.9,top,XL,XR,HH);if(e*tt>sbr.L/2-.5)PLAT(sbr,at,ry,e,tt,top)}
-    if(lobby&&len>16)DOORWALL(at,ry,tm,top,XL,XR,HH)}}
+    /* no partition across the middle of long lobbies */}}
   lbBuild();
   if(CLIPV.length){const N=CLIPV.length,UA=CLIPV.map(v=>new T.Vector4(v[0],v[1],v[2],v[3])),UB=CLIPV.map(v=>new T.Vector4(v[4],v[5],v[6],v[7])),UY=CLIPV.map(v=>v[8]),done=new Set;
    const hook=m=>{if(!m||done.has(m)||m.isShaderMaterial||m.isRawShaderMaterial)return;done.add(m);const prev=m.onBeforeCompile,pk=m.customProgramCacheKey;
